@@ -1,3 +1,5 @@
+![CC Graphics 2024_RandomDyads](https://github.com/csae-coders-corner/Random-dyads-in-sparse-networks/assets/148211163/b3148e61-a8aa-4e45-990d-6c7dd66495ca)
+
 # Random-dyads-in-sparse-networks
 How do you randomly generate dyads in sparse networks? Imagine you want to randomly group people together in pairs of two (e.g. job mentors with a mentee, tutors with a student, or workers with one of their friends), while considering certain conditions in your matching process (e.g. dyads with same interests, age groups or grades). Imagine you also want to randomly assign these pairs to treatment. Then you might want to check out the code below.
 Let's say we have a pool of workers and information about up to two of their friends (in the same pool). Our overarching goal is to generate as many pairs as possible within our given network. We show possible ways to pair workers for two sub-goals:
