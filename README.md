@@ -28,8 +28,10 @@ popular:	Number of times a person is mentioned as a friend by someone else
 ### GOAL #A: Generate dyads of friends
 
 In order to generate as many dyads of friends as possible, we first pair workers with only one friend and then workers with two friends (variable ‘nbfriends’ equals to one resp. two). Within those groups, we start with workers who have been mentioned least by someone else as a friend, i.e. we first pair the most unpopular workers and in the end pair the most popular workers (variable ‘popular’). As the number of possible matches for unpopular workers is lower than for popular workers, this approach allows us to come up with the highest number of possible matches in a sparse network. Depending on the density of the network, some workers will not be able to be matched. 
+
 Before we start, we generate the following new variables with all observations set to missing, which will be completed as part of the matching process.
 
+```
 gen D1		= .	// ID1 of dyad
 
 gen D2		= .	// ID2 of dyad
@@ -41,17 +43,24 @@ gen F1done	= . 	// Indicator equals to one if friend1 was successfully paired
 gen F2done	= . 	// Indicator equals to one if friend2 was successfully paired
 
 gen dyad 	= .  	// Dyad ID
+```
 
-To determine the order in which workers will be randomly paired during the matching process, we generate random numbers as follows:
+```
+* To determine the order in which workers will be randomly paired during the matching process, we generate random numbers as follows:
 bys nbfriends popular: gen 	rand = runiform()
 bys nbfriends popular: egen 	rank = rank(rand)
+```
 
 As described above, we start generating the first set of dyads for workers who have mentioned only one friend (nbfriends==1), starting with the least popular workers in the following loop:
+```
 su popular 	if nbfriends == 1
 forval i = `r(min)'/`r(max)' {
 su popular 	if nbfriends == 1 & popular == `i'
- 
+```
+
+
 // i. Within each set of equally popular workers, we pursue the matching process in the randomly generated order as determined by the variable 'rank'.
+```
 forval k = 1/`r(N)' {
 su done 	if rank==`k'
 
@@ -83,14 +92,17 @@ drop D1_ D2_ maxD1 maxD2
 }
 }
 }
+```
 
 The above loop needs to be repeated for workers who have mentioned two friends (nbfriends==2). As we are now dealing with two possible friends to be paired with, we just need to modify step iii. of the loop as follows:
 // iii. We first try to pair respective workers with their first friend and if that's not possible (because the first friend has already paired with someone else, i.e. F1done==1) we pair respective workers with their second friend.
+```
 replace D1	= workerID 	if rank==`k' & nbfriends==1 & popular==`i' & D1==. & (F1done!=1  F2done!=1) & done!=1 
 replace D2	= friendID1	if rank==`k' & nbfriends==1 & popular==`i' & D2==. & F1done!=1 & done!=1 
 replace D2	= friendID2	if rank==`k' & nbfriends==2 & popular==`i' & D2==. & F2done!=1 & done!=1 
 
 =2 & popular==`i' & D2==. & F2done!=1 & done!=1 
+```
 
 ### GOAL #B: Generate dyads of non-friends 
 Imagine we now want to pair workers with co-workers who are not friends. We also want to pair them with someone they have not been paired with in the past (and not with themselves obviously).
@@ -103,17 +115,22 @@ For clarity, we generate new variables for both conditions:
 gen cdt_one 	= business_unit
 gen cdt_two 	= grade
 Before we start, we also generate the following new variables with all observations set to missing, which will be completed as part of the matching process.
+```
 gen D1		= .	// ID1 of dyad
 gen D2		= .	// ID2 of dyad
 gen done	= . 	// Indicator equals to one if worker was successfully paired
 gen dyad 	= .  	// Dyad ID
+```
 
 To determine the order in which workers will be randomly paired during the matching process (taking into account the conditions above), we generate random numbers as follows:
+```
 bys cdt_one cdt_two: gen random	= runiform()
 bys cdt_one cdt_two: egen rank	= rank(random)
+```
 	
 We first summarize the general conditions, and run the loop for each group of workers fulfilling these conditions.
 
+```
 su cdt_two 		if cdt_one==1
 forval j=`r(min)'/`r(max)' { 
 
@@ -160,7 +177,7 @@ drop noID_one_ noID_one noID_two_ noID_two  noID_three_	noID_three  noID_four_ n
 }
 }
 }
-
+```
 Once the loop has been completed, we can finally generate a unique identifier per pair, for example:
 replace dyad= 100*(D1 + D2) + min(D1, D2)
 
@@ -171,7 +188,7 @@ This code can be easily extended by additional conditions.
 ### Treatment Assignment
 
 If we want to randomly assign dyads to treatment and control groups, we first need to generate a variable with the total number of all dyads. With strata variables, the size would have to be adjusted accordingly, e.g. bys strata: gen size=_N.
-
+```
 	gen size 	= _N
 	replace size	=  size/2 	
 
@@ -199,7 +216,7 @@ gen randnb_	= runiform() 	if mod(size,2)==1 & rank==int(size/2)+1
 	replace treat	= 1		if randnb>.5 & mod(size/2)==1 & rank==int(size/2)+1
 	replace treat	= 0		if randnb<.5 & mod(size/2)==1 & rank==int(size/2)+1
 
-
+```
 To be able to conduct randomization inference, it is important to re-randomize both the generation of dyads as well as the selection of treatment groups, and save re-randomization results, i.e. the composition of pairs and treatment assignments.
 
 **Vanessa Schreiber, DPhil Candidate in Economics, Oxford, 
